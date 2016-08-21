@@ -4,10 +4,10 @@
 $tokens = {
     "!" => "<exclamation>",
     "?" => "<question>",
-    "." => "<eosentence",
+    "." => "<eosentence>",
 	"," => " , ", # Make sure to split commas from words
 	"'" => " '", # Separate contractions"
-	"*" => "<sarcasm>"
+	"*" => "<sarcasm>" # Actually footnotes ... but fair proxy for sarcasm!
 }
 
 def parse_text(raw)
@@ -30,24 +30,35 @@ def normalize_file(file)
 
     exposition_lines = []
     contents = []
-	contents << "<boseason>"
+	contents << "<boseason>" # Missing start token, so add it manually
 
 	File.read(file).split("\n").each do |line|
         next if line.size == 0
+
+		token = parse_structured_exposition(line)
+
+		unless token.nil?
+			contents << token
+			next
+		end
+
 		this_line_type = line_type(line)
 		puts "line=#{line}"
 		puts "line_type=#{this_line_type}"
-        if this_line_type != :multi_exposition
+        if this_line_type == :multi_exposition
+			exposition_lines << line
+		else
 			if exposition_lines.size > 0
 				contents << parse_exposition(exposition_lines)
 				exposition_lines = []
 			end
-			if this_line_type == :character_line
-            	contents << parse_character_line(line)
-			else
-				contents << parse_single_exposition(line)
-			end
-        end
+            case this_line_type
+                when :single_exposition
+                    contents << parse_single_exposition(line)
+                else
+                    contents << parse_character_line(line)
+            end
+		end
     end
     contents << "<eoseason>"
 	new_file_name = file.gsub("raw","normalized")
@@ -60,6 +71,8 @@ def line_type(line)
     # e.g. exposition: 2 INT. VILLAGE POST OFFICE. DAWN.
     if line =~ /[0-9]([\sA-Z\.]*?)$/
         return :multi_exposition
+	elsif line =~ /^(END|EPISODE|ACT|SCENE|SEASON)$/
+		return :structured_exposition
 	elsif line =~ /[A-Z\s]$/
 		return :single_exposition
 	elsif line =~ /^[A-Z\s\(\)\.]*?\:/
@@ -79,12 +92,13 @@ def parse_character_line(text)
 
     name.gsub!(" ","_")
 	
+    puts "parsing char line: #{line}"
 	line = parse_text(line)
       
 	"<boname>#{name}<eoname>#{line}"
 end
 
-def parse_single_exposition(line)
+def parse_structured_exposition(line)
 	#e.g.
 	# EPISODE TWO
 	# END OF EPISODE ONE
@@ -98,11 +112,19 @@ def parse_single_exposition(line)
 		return "<bo#{type}>"
 	end
 
-	""
+	nil
+end
+
+def parse_single_exposition(line)
+	#e.g.
+    # SCENE—NO DIALOGUE OF THOMAS WALKING THROUGH THE VILLAGE
+    content = line.gsub("SCENE", "")
+    "<boexposition>#{content}<eoexposition>"
 end
 
 def parse_exposition(lines)
 	content = "<boexposition>"
+    puts "parsing expo lines: #{lines}"
 	content << parse_text(lines.first.gsub(/^[0-9]/, ""))
 
 	lines[1..-1].each do |line|
