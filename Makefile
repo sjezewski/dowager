@@ -26,6 +26,6 @@ input-data: normalize-data
 docker-build:
 	docker build -t lstm_rnn_model ./code/analysis
 
-setup:
+setup: docker-build
 	pachctl create-pipeline -f code/analysis/pipeline.json
 
