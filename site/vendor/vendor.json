@@ -1,5 +1,5 @@
 {
-	"comment": "",
+	"comment": "loaded pachyderm from src at tag 1.2.2",
 	"ignore": "test",
 	"package": [
 		{
