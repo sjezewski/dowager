@@ -1,4 +1,14 @@
 
+build:
+	cd site && go build .
+
+run: build
+	# Note for local setup:
+	# May want to run `$ sudo docker-machine ssh akillerqueen -fTNL 650:localhost:30650`
+	# to setup local port forwarding w this port as well.
+
+	PACHD_PORT_650_TCP_ADDR=localhost GIN_MODE=debug ./site/site
+
 init-env:
 	gcloud config set account seanwjezewski@gmail.com
 	gcloud config set project personal
