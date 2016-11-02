@@ -1,0 +1,231 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "client/pfs/pfs.proto";
+
+package pachyderm.pps;
+
+option go_package = "pps";
+
+message Secret {
+    // Name must be the name of the secret in kubernetes.
+    string name = 1;
+    string mount_path = 2;
+}
+
+message Transform {
+  string image = 1;
+  repeated string cmd = 2;
+  map<string, string> env = 3;
+  repeated Secret secrets = 4;
+  repeated string stdin = 5;
+  repeated int64 accept_return_code = 6;
+  bool debug = 7;
+}
+
+message Job {
+  string id = 1;
+}
+
+enum JobState {
+    JOB_PULLING = 0;
+    JOB_RUNNING = 1;
+    JOB_FAILURE = 2;
+    JOB_SUCCESS = 3;
+    // An empty job is a job that hasn't actually been run.
+    // It's a result of empty input commits.
+    JOB_EMPTY = 4;
+}
+
+enum Partition {
+  BLOCK = 0;
+  FILE = 1;
+  REPO = 2;
+}
+
+enum Incremental {
+    NONE = 0; // all data will be shown
+    DIFF = 1; // a minimal diff is shown
+    FULL = 2; // full objects will be shown (granularity is specified by partition)
+}
+
+message Method {
+  Partition partition = 1;
+  Incremental incremental = 2;
+}
+
+message JobInput {
+  pfs.Commit commit = 1;
+  Method method = 2;
+  // This flag specifies whether the pipeline should be triggered
+  // when this input gets an empty commit.
+  bool run_empty = 3;
+}
+
+message ParallelismSpec {
+  // Which Parallelism strategy to use. Depending on the value of
+  // 'strategy', other messages in the spec will or will not be set.
+  enum Strategy {
+    CONSTANT = 0;
+    COEFFICIENT = 1;
+  }
+  Strategy strategy = 1;
+
+  // If 'strategy' is set to CONSTANT, then the field 'constant' is used.
+  //
+  // Starts the pipeline/job with a 'constant' workers, unless 'constant' is
+  // zero. If 'constant' is zero (which is the zero value of ParallelismSpec),
+  // then Pachyderm will choose the number of workers that is started,
+  // (currently it chooses the number of workers in the cluster)
+  uint64 constant = 2;
+
+  // If 'strategy' is set to COEFFICIENT, then the field 'coefficient' is used.
+  //
+  // Starts the pipeline/job with number of workers equal to 'coefficient' * N,
+  // where N is the number of nodes in the kubernetes cluster.
+  //
+  // For example, if each Kubernetes node has four CPUs, you might set
+  // 'coefficient' to four, so that there are four Pachyderm workers per
+  // Kubernetes node, and each Pachyderm worker gets one CPU. If you want to
+  // reserve half the nodes in your cluster for other tasks, you might set
+  // 'coefficient' to 0.5.
+  double coefficient = 3;
+}
+
+message JobInfo {
+  reserved 4;
+  Job job = 1;
+  Transform transform = 2;
+  Pipeline pipeline = 3;
+  ParallelismSpec parallelism_spec = 12;
+  repeated JobInput inputs = 5;
+  Job parent_job = 6;
+  google.protobuf.Timestamp started = 7;
+  google.protobuf.Timestamp finished = 8;
+  pfs.Commit output_commit = 9;
+  JobState state = 10;
+  map<uint64, string> pod_commits = 11;
+}
+
+message JobInfos {
+  repeated JobInfo job_info = 1;
+}
+
+message Pipeline {
+  string name = 1;
+}
+
+message PipelineInput {
+  pfs.Repo repo = 1;
+  Method method = 2;
+  // This flag specifies whether the pipeline should be triggered
+  // when this input gets an empty commit.
+  bool run_empty = 3;
+}
+
+enum PipelineState {
+    // When the pipeline is not ready to be triggered by commits.
+    // This happens when either 1) a pipeline has been created but not yet picked
+    // up by a PPS server, or 2) the pipeline does not have any inputs and is meant
+    // to be triggered manually
+    PIPELINE_IDLE = 0;
+    // After this pipeline is picked up by a pachd node.  This is the normal
+    // state of a pipeline.
+    PIPELINE_RUNNING = 1;
+    // After some error caused runPipeline to exit, but before the pipeline is
+    // re-run.  This is when the exponential backoff is in effect.
+    PIPELINE_RESTARTING = 2;
+    // We have retried too many times and we have given up on this pipeline.
+    PIPELINE_FAILURE = 3;
+    // The pipeline has been explicitly stopped by the user.
+    PIPELINE_STOPPED = 4;
+}
+
+message PipelineInfo {
+  reserved 3;
+  Pipeline pipeline = 1;
+  Transform transform = 2;
+  ParallelismSpec parallelism_spec = 10;
+  repeated PipelineInput inputs = 4;
+  pfs.Repo output_repo = 5;
+  google.protobuf.Timestamp created_at = 6;
+  PipelineState state = 7;
+  string recent_error = 8;
+  map<int32, int32> job_counts = 9;
+}
+
+message PipelineInfos {
+  repeated PipelineInfo pipeline_info = 1;
+}
+
+message CreateJobRequest {
+  reserved 3;
+  Transform transform = 1;
+  Pipeline pipeline = 2;
+  ParallelismSpec parallelism_spec = 7;
+  repeated JobInput inputs = 4;
+  Job parent_job = 5;
+  bool force = 6;
+}
+
+message InspectJobRequest {
+  Job job = 1;
+  bool block_state = 2; // block until state is either JOB_STATE_FAILURE or JOB_STATE_SUCCESS
+}
+
+message ListJobRequest {
+  Pipeline pipeline = 1; // nil means all pipelines
+  repeated pfs.Commit input_commit = 2; // nil means all inputs
+}
+
+message GetLogsRequest {
+    Job job = 1;
+}
+
+message CreatePipelineRequest {
+  reserved 3;
+  Pipeline pipeline = 1;
+  Transform transform = 2;
+  ParallelismSpec parallelism_spec = 7;
+  repeated PipelineInput inputs = 4;
+  bool update = 5;
+  bool no_archive = 6; // don't archive previously processed data, meaningful only if update is true
+}
+
+message InspectPipelineRequest {
+  Pipeline pipeline = 1;
+}
+
+message ListPipelineRequest {
+}
+
+message DeletePipelineRequest {
+  Pipeline pipeline = 1;
+}
+
+message StartPipelineRequest {
+  Pipeline pipeline = 1;
+}
+
+message StopPipelineRequest {
+  Pipeline pipeline = 1;
+}
+
+service API {
+  rpc CreateJob(CreateJobRequest) returns (Job) {}
+  rpc InspectJob(InspectJobRequest) returns (JobInfo) {}
+  rpc ListJob(ListJobRequest) returns (JobInfos) {}
+  rpc GetLogs(GetLogsRequest) returns (stream google.protobuf.BytesValue) {}
+
+  rpc CreatePipeline(CreatePipelineRequest) returns (google.protobuf.Empty) {}
+  rpc InspectPipeline(InspectPipelineRequest) returns (PipelineInfo) {}
+  rpc ListPipeline(ListPipelineRequest) returns (PipelineInfos) {}
+  rpc DeletePipeline(DeletePipelineRequest) returns (google.protobuf.Empty) {}
+  rpc StartPipeline(StartPipelineRequest) returns (google.protobuf.Empty) {}
+  rpc StopPipeline(StopPipelineRequest) returns (google.protobuf.Empty) {}
+
+  // DeleteAll deletes everything
+  rpc DeleteAll(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
