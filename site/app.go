@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
@@ -39,10 +40,32 @@ func handle(page string) func(*gin.Context) {
 		if gin.Mode() == "debug" {
 			router.HTMLRender = loadTemplates()
 		}
+		var errors []error
+		var sentence string
+		sentence = "... hrmm ..."
+		repos, err := APIClient.ListRepo([]string{})
+
+		if err != nil {
+			fmt.Printf("ERR! %v\n", err)
+			errors = append(errors, err)
+		} else {
+			// Again ... silly ... but compiler doesn't know its used in a view
+			sentence = fmt.Sprintf("Got repo name : %v\n", repos[0])
+			fmt.Printf("Loaded %v repos", len(repos))
+		}
+		var fileContents bytes.Buffer
+		err = APIClient.GetFile("dummy", "master", "dummy_file.txt", 0, 0, "", true, nil, &fileContents)
+		if err != nil {
+			fmt.Printf("error getting file: %v\n", err)
+			errors = append(errors, err)
+		} else {
+			sentence = fileContents.String()
+		}
 
 		c.HTML(http.StatusOK, page, gin.H{
 			"title":    "The Dowager Countess",
-			"sentence": "... hrmm ...",
+			"sentence": sentence,
+			"errors":   errors,
 		})
 
 	}

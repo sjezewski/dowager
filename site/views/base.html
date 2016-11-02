@@ -7,6 +7,19 @@
 </head>
 
 <body>
+  {{ $len_errors := len .errors }}
+  {{ if ne $len_errors 0 }}
+  <div class="message error">
+  Errors:
+
+  {{ range .errors}}
+    <span> {{ . }} </span>
+  {{ end }}
+
+  </div>
+
+  {{ end }}
+
 The Dowager says: {{ .sentence }}
 
 </body>
