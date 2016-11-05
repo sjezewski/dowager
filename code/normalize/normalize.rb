@@ -70,7 +70,7 @@ def fix_bad_characters(s)
 	# E.g. I get:
 	# can't encode character u'\u2019' (or 2018) these are the special symbols for left and right single quote
 	# in the generate job sometimes, so I need to fix them here
-	s.gsub(/[\u2014|\u2018|\u2019|\u2026]/, "")
+	s.gsub(/[\u2014|\u2018|\u2019|\u2020|\u2026]/, "")
 end
 
 def line_type(line)
@@ -148,7 +148,8 @@ prefix = "data/normalized"
 
 all = File.read("#{prefix}/all.txt")
 
-lines = all.split("\n")
+token = "<boname>"
+lines = all.split token
 
 # 80% to training
 # 10% to test
@@ -157,8 +158,12 @@ lines = all.split("\n")
 test = lines.size / 10
 valid = test * 2
 
-File.open("#{prefix}/ptb.test.txt", "w") << lines[0..(test-1)].join("\n")
-File.open("#{prefix}/ptb.valid.txt", "w") << lines[test..(valid-1)].join("\n")
-File.open("#{prefix}/ptb.train.txt", "w") << lines[valid..-1].join("\n")
+File.open("#{prefix}/ptb.test.txt", "w") << lines[0..(test-1)].join(token)
+v = File.open("#{prefix}/ptb.valid.txt", "w")
+v << token
+v << lines[test..(valid-1)].join(token)
+t = File.open("#{prefix}/ptb.train.txt", "w")
+t << token
+t << lines[valid..-1].join(token)
 
 

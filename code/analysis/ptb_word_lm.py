@@ -377,7 +377,7 @@ def generate(word_to_id, id_to_word):
                                                  m.targets: np.zeros((1, 1)),
                                                  m.initial_state: m.initial_state.eval(),
                                                  m.weights: np.ones(1)})
-      next_word = int(word_to_id["<eos>"])
+      next_word = int(word_to_id["<boname>VIOLET<eoname>"])
       sentence = []
       count = 0
       while True:
@@ -401,9 +401,10 @@ def generate(word_to_id, id_to_word):
 
 def token_to_string(token):
     ts = {
-            "<eos>" : ".",
+            "<eosentence>" : ".",
             "<question>" : "?",
             "<exclamation>" : "!", 
+            "<sarcasm>" : "*",
             "<open-brack>" : "[", 
             "<close-brack>" : "]", 
             "<ellipsis>" : "...",
@@ -411,8 +412,8 @@ def token_to_string(token):
             "<eoquote>" : "'",
             "<boname>" : "\n[",
             "<eoname>" : "]: ",
-            "<open-exp>" : "\n{{",
-            "<close-exp>" : "}}"
+            "<boexposition>" : "\n{{",
+            "<eoexposition>" : "}}"
             }
     if token in ts:
         return ts[token]

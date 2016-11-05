@@ -54,7 +54,7 @@ func handle(page string) func(*gin.Context) {
 			fmt.Printf("Loaded %v repos", len(repos))
 		}
 		var fileContents bytes.Buffer
-		err = APIClient.GetFile("dummy", "master", "dummy_file.txt", 0, 0, "", true, nil, &fileContents)
+		err = APIClient.GetFile("generate", "production", "sentences.txt", 0, 0, "", true, nil, &fileContents)
 		if err != nil {
 			fmt.Printf("error getting file: %v\n", err)
 			errors = append(errors, err)
