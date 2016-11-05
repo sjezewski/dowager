@@ -3,7 +3,7 @@
     "name": "train"
   },
   "transform": {
-    "image": "sjezewski/dowager_rnn:latest",
+    "image": "sjezewski/dowager_rnn:1",
     "cmd": [ "sh" ],
     "stdin": [
       "mkdir /data",
@@ -31,7 +31,7 @@
     "name": "generate"
   },
   "transform": {
-    "image": "sjezewski/dowager_rnn:latest",
+    "image": "sjezewski/dowager_rnn:1",
     "cmd": [ "sh" ],
     "stdin": [
       "mkdir /training_data",

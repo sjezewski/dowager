@@ -1,6 +1,4 @@
 {
-  "kind": "ServiceAccount",
-  "apiVersion": "v1",
   "metadata": {
     "name": "pachyderm",
     "creationTimestamp": null,
@@ -8,59 +6,11 @@
       "app": "",
       "suite": "pachyderm"
     }
-  }
+  },
+  "kind": "ServiceAccount",
+  "apiVersion": "v1"
 }
 {
-  "kind": "PersistentVolume",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": "rethink-volume",
-    "creationTimestamp": null,
-    "labels": {
-      "app": "rethink-volume",
-      "suite": "pachyderm-pps-storage"
-    }
-  },
-  "spec": {
-    "capacity": {
-      "storage": "0"
-    },
-    "hostPath": {
-      "path": "/tmp/pach/rethink"
-    },
-    "accessModes": [
-      "ReadWriteOnce"
-    ],
-    "persistentVolumeReclaimPolicy": "Retain"
-  },
-  "status": {}
-}
-{
-  "kind": "PersistentVolumeClaim",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": "rethink-volume-claim",
-    "creationTimestamp": null,
-    "labels": {
-      "app": "rethink-volume-claim",
-      "suite": "pachyderm-pps-storage"
-    }
-  },
-  "spec": {
-    "accessModes": [
-      "ReadWriteOnce"
-    ],
-    "resources": {
-      "requests": {
-        "storage": "0"
-      }
-    }
-  },
-  "status": {}
-}
-{
-  "kind": "ReplicationController",
-  "apiVersion": "v1",
   "metadata": {
     "name": "etcd",
     "creationTimestamp": null,
@@ -126,11 +76,11 @@
   },
   "status": {
     "replicas": 0
-  }
+  },
+  "kind": "ReplicationController",
+  "apiVersion": "v1"
 }
 {
-  "kind": "Service",
-  "apiVersion": "v1",
   "metadata": {
     "name": "etcd",
     "creationTimestamp": null,
@@ -158,11 +108,11 @@
   },
   "status": {
     "loadBalancer": {}
-  }
+  },
+  "kind": "Service",
+  "apiVersion": "v1"
 }
 {
-  "kind": "Service",
-  "apiVersion": "v1",
   "metadata": {
     "name": "rethink",
     "creationTimestamp": null,
@@ -199,11 +149,11 @@
   },
   "status": {
     "loadBalancer": {}
-  }
+  },
+  "kind": "Service",
+  "apiVersion": "v1"
 }
 {
-  "kind": "ReplicationController",
-  "apiVersion": "v1",
   "metadata": {
     "name": "rethink",
     "creationTimestamp": null,
@@ -230,8 +180,8 @@
         "volumes": [
           {
             "name": "rethink-storage",
-            "persistentVolumeClaim": {
-              "claimName": "rethink-volume-claim"
+            "hostPath": {
+              "path": "/tmp/pach/rethink"
             }
           }
         ],
@@ -240,15 +190,11 @@
             "name": "rethink",
             "image": "rethinkdb:2.3.3",
             "command": [
-              "rethinkdb"
-            ],
-            "args": [
+              "rethinkdb",
               "-d",
               "/var/rethinkdb/data",
               "--bind",
-              "all",
-              "--cache-size",
-              "768"
+              "all"
             ],
             "ports": [
               {
@@ -264,11 +210,7 @@
                 "containerPort": 29015
               }
             ],
-            "resources": {
-              "requests": {
-                "memory": "1024M"
-              }
-            },
+            "resources": {},
             "volumeMounts": [
               {
                 "name": "rethink-storage",
@@ -283,11 +225,11 @@
   },
   "status": {
     "replicas": 0
-  }
+  },
+  "kind": "ReplicationController",
+  "apiVersion": "v1"
 }
 {
-  "kind": "Job",
-  "apiVersion": "extensions/v1beta1",
   "metadata": {
     "name": "pachd-init",
     "creationTimestamp": null,
@@ -316,7 +258,7 @@
         "containers": [
           {
             "name": "pachd-init",
-            "image": "pachyderm/pachd:1.2.3",
+            "image": "pachyderm/pachd:1.2.2",
             "env": [
               {
                 "name": "PACH_ROOT",
@@ -335,11 +277,11 @@
       }
     }
   },
-  "status": {}
+  "status": {},
+  "kind": "Job",
+  "apiVersion": "extensions/v1beta1"
 }
 {
-  "kind": "Service",
-  "apiVersion": "v1",
   "metadata": {
     "name": "pachd",
     "creationTimestamp": null,
@@ -370,11 +312,11 @@
   },
   "status": {
     "loadBalancer": {}
-  }
+  },
+  "kind": "Service",
+  "apiVersion": "v1"
 }
 {
-  "kind": "ReplicationController",
-  "apiVersion": "v1",
   "metadata": {
     "name": "pachd",
     "creationTimestamp": null,
@@ -409,7 +351,7 @@
         "containers": [
           {
             "name": "pachd",
-            "image": "pachyderm/pachd:1.2.3",
+            "image": "pachyderm/pachd:1.2.2",
             "ports": [
               {
                 "name": "api-grpc-port",
@@ -444,7 +386,7 @@
               },
               {
                 "name": "JOB_SHIM_IMAGE",
-                "value": "pachyderm/job-shim:1.2.3"
+                "value": "pachyderm/job-shim:1.2.2"
               },
               {
                 "name": "JOB_IMAGE_PULL_POLICY",
@@ -452,7 +394,7 @@
               },
               {
                 "name": "PACHD_VERSION",
-                "value": "1.2.3"
+                "value": "1.2.2"
               },
               {
                 "name": "METRICS",
@@ -467,14 +409,14 @@
               }
             ],
             "readinessProbe": {
+              "initialDelaySeconds": 15,
+              "timeoutSeconds": 1,
               "exec": {
                 "command": [
                   "./pachd",
                   "--readiness-check"
                 ]
-              },
-              "initialDelaySeconds": 15,
-              "timeoutSeconds": 1
+              }
             },
             "imagePullPolicy": "IfNotPresent",
             "securityContext": {
@@ -488,111 +430,7 @@
   },
   "status": {
     "replicas": 0
-  }
-}
-{
+  },
   "kind": "ReplicationController",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": "registry",
-    "creationTimestamp": null,
-    "labels": {
-      "app": "registry",
-      "suite": "pachyderm"
-    }
-  },
-  "spec": {
-    "replicas": 1,
-    "selector": {
-      "app": "registry"
-    },
-    "template": {
-      "metadata": {
-        "name": "registry",
-        "creationTimestamp": null,
-        "labels": {
-          "app": "registry",
-          "suite": "pachyderm"
-        }
-      },
-      "spec": {
-        "volumes": [
-          {
-            "name": "image-storage"
-          }
-        ],
-        "containers": [
-          {
-            "name": "registry",
-            "image": "registry:2",
-            "ports": [
-              {
-                "name": "registry",
-                "containerPort": 5000
-              }
-            ],
-            "env": [
-              {
-                "name": "REGISTRY_HTTP_ADDR",
-                "value": ":5000"
-              },
-              {
-                "name": "REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY",
-                "value": "/var/lib/registry"
-              }
-            ],
-            "resources": {
-              "limits": {
-                "cpu": "100m",
-                "memory": "100Mi"
-              },
-              "requests": {
-                "cpu": "100m",
-                "memory": "100Mi"
-              }
-            },
-            "volumeMounts": [
-              {
-                "name": "image-storage",
-                "mountPath": "/var/lib/registry"
-              }
-            ],
-            "imagePullPolicy": "IfNotPresent"
-          }
-        ]
-      }
-    }
-  },
-  "status": {
-    "replicas": 0
-  }
-}
-{
-  "kind": "Service",
-  "apiVersion": "v1",
-  "metadata": {
-    "name": "registry",
-    "creationTimestamp": null,
-    "labels": {
-      "app": "registry",
-      "suite": "pachyderm"
-    }
-  },
-  "spec": {
-    "ports": [
-      {
-        "name": "registry",
-        "port": 5000,
-        "targetPort": 0,
-        "nodePort": 30500
-      }
-    ],
-    "selector": {
-      "app": "registry"
-    },
-    "type": "NodePort"
-  },
-  "status": {
-    "loadBalancer": {}
-  }
+  "apiVersion": "v1"
 }

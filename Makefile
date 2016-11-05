@@ -51,9 +51,9 @@ docker-analysis:
 	# There is another bug right now where master is out of sync w versions
 	# in terms of the jobshim's requirements. Checking out a specific version
 	# so that you can install the right jobshim binary is important
-	cd ./code/analysis/pachyderm && git checkout v1.2.3 && rm -rf .git
-	docker build -t "sjezewski/dowager_rnn:latest" ./code/analysis
-	docker push sjezewski/dowager_rnn:latest
+	cd ./code/analysis/pachyderm && git checkout v1.2.2 && rm -rf .git
+	docker build -t "sjezewski/dowager_rnn:1" ./code/analysis
+	docker push sjezewski/dowager_rnn:1
 	rm -rf ./code/analysis/pachyderm
 
 docker: docker-webapp docker-analysis
