@@ -28,7 +28,24 @@ ADD . /code
 #ADD pachyderm /go/src/github.com/pachyderm/pachyderm
 
 # Install Pachyderm job-shim
-RUN go get github.com/pachyderm/pachyderm/src/server/cmd/job-shim && \
 
+# Had to fork this, as there was a change on master that was needed that wasn't on 1.2.3
+# Specifically the PPS_POD_NAME wasn't set and was causing errors on pjob pods like:
+# `env key not set when required: PPS_POD_NAME main.appEnv`
+
+# To construct the fork, I did a replace of the domain imports a la:
+# 
+# LANG=C find ./src/ -type f -exec sed -i '' 's/pachyderm\/pachyderm/sjezewski\/pachyderm/g' {} +
+# 
+# and then I have to copy the client symlink (or there are vendor conflicts) by doing:
+#
+# mv src/server/vendor/github.com/pachyderm src/server/vendor/github.com/sjezewski
+#
+
+# Also,
+# this meant that I needed to use a local build of pachctl to generate the manifest,
+# which in turn meant that it referenced a pachd image that DNE on pachyderm's account
+# So I had to build the image locally, then push to my account, AND update the manifest manually
+RUN go get github.com/sjezewski/pachyderm/src/server/cmd/job-shim && \
     cp $GOPATH/bin/job-shim /job-shim
 
