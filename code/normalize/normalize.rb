@@ -136,3 +136,23 @@ end
 
 
 normalize
+
+prefix = "data/normalized"
+%x`cat #{prefix}/*.txt > #{prefix}/all.txt`
+
+all = File.read("#{prefix}/all.txt")
+
+lines = all.split("\n")
+
+# 80% to training
+# 10% to test
+# 10% to valid
+
+test = lines.size / 10
+valid = test * 2
+
+File.open("#{prefix}/ptb.test.txt", "w") << lines[0..(test-1)].join("\n")
+File.open("#{prefix}/ptb.valid.txt", "w") << lines[test..(valid-1)].join("\n")
+File.open("#{prefix}/ptb.train.txt", "w") << lines[valid..-1].join("\n")
+
+
