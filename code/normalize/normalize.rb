@@ -63,8 +63,14 @@ def normalize_file(file)
     contents << "<eoseason>"
 	new_file_name = file.gsub("raw","normalized")
 	f = File.new(new_file_name, "w")
-	f << contents.compact.join("\n")
-	puts contents
+	f << fix_bad_characters(contents.compact.join("\n"))
+end
+
+def fix_bad_characters(s)
+	# E.g. I get:
+	# can't encode character u'\u2019' (or 2018) these are the special symbols for left and right single quote
+	# in the generate job sometimes, so I need to fix them here
+	s.gsub(/[\u2014|\u2018|\u2019|\u2026]/, "")
 end
 
 def line_type(line)
@@ -138,7 +144,7 @@ end
 normalize
 
 prefix = "data/normalized"
-%x`cat #{prefix}/*.txt > #{prefix}/all.txt`
+%x`cat #{prefix}/season*.txt > #{prefix}/all.txt`
 
 all = File.read("#{prefix}/all.txt")
 

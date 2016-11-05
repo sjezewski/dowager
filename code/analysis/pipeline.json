@@ -37,7 +37,7 @@
       "mkdir /training_data",
       "cp /pfs/train/ptb.ckpt* /training_data",
       "cp /pfs/train/*.json /training_data",
-      "cd /code && python ptb_word_lm.py --model=test --generate=true --model_path_prefix=/training_data > /pfs/out/new_script.txt" 
+      "cd /code && python ptb_word_lm.py --model=test --generate=true --model_path_prefix=/training_data > /pfs/out/sentences.txt" 
     ]
   },
   "parallelism_spec": {
