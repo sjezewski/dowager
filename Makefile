@@ -1,3 +1,4 @@
+# Web App
 
 build:
 	cd site && go build .
@@ -9,33 +10,55 @@ run: build
 
 	PACHD_PORT_650_TCP_ADDR=localhost GIN_MODE=debug ./site/site
 
-init-env:
-	gcloud config set account seanwjezewski@gmail.com
-	gcloud config set project personal
-	gcloud auth login
-	# above should work ... but only `gcloud init` seems to work for me
-	kubectl config use-context gke_personal-141021_us-central1-b_pachyderm
-	export ADDRESS=`gcloud compute instances list | head -n 2 | tail -n 1 | cut -d " " -f 20`
-	# ADDRESS is used for pachctl to connect to pachd
+deploy-web: docker-webapp
+	kubectl run dowager --image=sjezewski/dowager:latest --port=9080
+	kubectl expose deployment dowager --type="LoadBalancer"
+
+stop-web:
+	kubectl delete deployment dowager
+
+update-web: docker-webapp
+	kubectl rolling-update dowager --image=sjezewski/dowager:latest
+
+# Pachyderm Pipelines
 
 normalize-data:
 	./code/normalize/normalize.rb
 
-launch-cluster:
-
-clean-launch-cluster:
-
 input-data: normalize-data
 	pachctl create-repo scripts
-	mkdir -p tmp
-	pachctl start-commit scripts > tmp/commitID
-	ls -1 data/noramlized/* | while read -r file; do cat $$file | pachctl put-file scripts `cat tmp/commitID` `basename $$file`; done
-	pachctl finish-commit scripts `cat tmp/commitID`
-	rm tmp/commitID
+	pachctl start-commit scripts master
+	ls -1 data/normalized/* | while read -r file; do cat $$file | pachctl put-file scripts master `basename $$file`; done
+	pachctl finish-commit scripts master
 
-docker-build:
-	docker build -t lstm_rnn_model ./code/analysis
-
-setup: docker-build
+setup-pipelines: docker-analysis input-data
 	pachctl create-pipeline -f code/analysis/pipeline.json
 
+# Docker helpers
+
+docker-webapp:
+	docker build -t "sjezewski/dowager:latest" ./site
+	docker push sjezewski/dowager:latest
+
+docker-analysis:
+	cp -R $(GOPATH)/src/github.com/pachyderm/pachyderm ./code/analysis
+	# The Dockerfile needs the pachyderm src
+	# the code on master at the moment doesn't work?
+	# I know Derek added this as a work around
+	cd ./code/analysis/pachyderm && git checkout v1.2.2 && rm -rf .git
+	docker build -t "sjezewski/dowager_rnn:latest" ./code/analysis
+	docker push sjezewski/dowager_rnn:latest
+	rm -rf ./code/analysis/pachyderm
+
+docker: docker-webapp docker-analysis
+
+
+# Pachyderm cluster
+
+launch-pachyderm-cluster:
+	which pachctl
+	pachctl deploy --dry-run > build/pachyderm.json
+	cat build/pachyderm.json | kubectl create -f -
+
+clean-launch-pachyderm-cluster:
+	cat build/pachyderm.json | kubectl delete --ignore-not-found -f -

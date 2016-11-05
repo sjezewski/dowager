@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow
+FROM tensorflow/tensorflow:0.10.0
 MAINTAINER jdoliner@pachyderm.io
 
 # Install FUSE
@@ -22,10 +22,13 @@ ENV GOROOT /usr/local/go
 
 # Add the code files
 
-ADD code /code
+ADD . /code
+
+# Add source code
+#ADD pachyderm /go/src/github.com/pachyderm/pachyderm
 
 # Install Pachyderm job-shim
-RUN go get github.com/pachyderm/pachyderm && \
-	go get github.com/pachyderm/pachyderm/src/server/cmd/job-shim && \
+RUN go get github.com/pachyderm/pachyderm/src/server/cmd/job-shim && \
+
     cp $GOPATH/bin/job-shim /job-shim
 
