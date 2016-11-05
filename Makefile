@@ -41,11 +41,17 @@ docker-webapp:
 	docker push sjezewski/dowager:latest
 
 docker-analysis:
+	rm -rf ./code/analysis/pachyderm
 	cp -R $(GOPATH)/src/github.com/pachyderm/pachyderm ./code/analysis
 	# The Dockerfile needs the pachyderm src
 	# the code on master at the moment doesn't work?
 	# I know Derek added this as a work around
-	cd ./code/analysis/pachyderm && git checkout v1.2.2 && rm -rf .git
+	# --
+	# Also!
+	# There is another bug right now where master is out of sync w versions
+	# in terms of the jobshim's requirements. Checking out a specific version
+	# so that you can install the right jobshim binary is important
+	cd ./code/analysis/pachyderm && git checkout v1.2.3 && rm -rf .git
 	docker build -t "sjezewski/dowager_rnn:latest" ./code/analysis
 	docker push sjezewski/dowager_rnn:latest
 	rm -rf ./code/analysis/pachyderm

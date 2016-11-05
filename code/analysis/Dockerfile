@@ -25,7 +25,7 @@ ENV GOROOT /usr/local/go
 ADD . /code
 
 # Add source code
-#ADD pachyderm /go/src/github.com/pachyderm/pachyderm
+ADD pachyderm /go/src/github.com/pachyderm/pachyderm
 
 # Install Pachyderm job-shim
 
@@ -46,6 +46,13 @@ ADD . /code
 # this meant that I needed to use a local build of pachctl to generate the manifest,
 # which in turn meant that it referenced a pachd image that DNE on pachyderm's account
 # So I had to build the image locally, then push to my account, AND update the manifest manually
-RUN go get github.com/sjezewski/pachyderm/src/server/cmd/job-shim && \
-    cp $GOPATH/bin/job-shim /job-shim
 
+#RUN go get github.com/sjezewski/pachyderm/src/server/cmd/job-shim && \
+#    cp $GOPATH/bin/job-shim /job-shim
+
+RUN cd /go/src/github.com/pachyderm/pachyderm && \
+	ls ./src/client
+
+RUN cd /go/src/github.com/pachyderm/pachyderm && \
+	go install ./src/server/cmd/job-shim && \
+	cp $GOPATH/bin/job-shim /job-shim
