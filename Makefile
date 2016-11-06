@@ -39,6 +39,9 @@ input-data: normalize-data
 setup-pipelines: docker-analysis input-data
 	pachctl create-pipeline -f code/analysis/pipeline.json
 
+generate-new-quote:
+	pachctl create-job -f code/analysis/new-quote.json 
+
 # Docker helpers
 
 docker-webapp:

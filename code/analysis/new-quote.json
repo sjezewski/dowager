@@ -1,0 +1,30 @@
+{
+  "pipeline": {
+    "name": "generate"
+  },
+  "transform": {
+    "image": "sjezewski/dowager_rnn:1",
+    "cmd": [ "sh" ],
+    "stdin": [
+      "mkdir /training_data",
+      "cp /pfs/train/ptb.ckpt* /training_data",
+      "cp /pfs/train/*.json /training_data",
+      "cd /code && python ptb_word_lm.py --model=small --generate=true --model_path_prefix=/training_data > /pfs/out/sentences.txt" 
+    ]
+  },
+  "parallelism_spec": {
+       "strategy" : "CONSTANT",
+       "constant" : 1
+  },
+  "inputs": [
+    {
+	  "commit": {
+        "repo": {
+          "name": "train"
+        },
+		"id": "3796c662af26482ca9c95e3ea896fa35"
+      },
+      "method": "global"
+    }
+  ]
+}
