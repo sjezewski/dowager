@@ -15,9 +15,14 @@ deploy-web: docker-webapp
 	kubectl expose deployment dowager --type="LoadBalancer"
 
 stop-web:
-	kubectl delete deployment dowager
+	kubectl delete --ignore-not-found deployment dowager
+	kubectl delete --ignore-not-found service dowager
 
-update-web: docker-webapp
+relaunch-web: stop-web deploy-web
+
+update-web:
+	# This doesn't work ... but a variant used to
+	# k8s api probably changed
 	kubectl rolling-update dowager --image=sjezewski/dowager:latest
 
 # Pachyderm Pipelines
