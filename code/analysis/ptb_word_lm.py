@@ -380,6 +380,7 @@ def generate(word_to_id, id_to_word):
       next_word = int(word_to_id["<boname>VIOLET<eoname>"])
       sentence = []
       count = 0
+      last_word = int(word_to_id["<eosentence>"])
       while True:
           probs, final_state, _ = session.run([m.probs, m.final_state, tf.no_op()],
                                                     {m.input_data: [[next_word]],
@@ -393,7 +394,7 @@ def generate(word_to_id, id_to_word):
           next_word = non_uniform_randomly_sample(p)
           sentence += [token_to_string(id_to_word[str(next_word)])]
           count += 1
-          if count > 1000:
+          if count > 100 | next_word == last_word:
               break
 
       
